@@ -1,0 +1,1236 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: hide
+    theme: united
+    highlight: tango
+---
+
+
+
+Old 29 Training sets
+====================
+##Boxplot Top N: None vs Elbow vs Median
+
+```{r boxplotOld ,fig.width=12, fig.align='center'}
+top_none <- read.table("~/Box/SCRMshaw_HD_all29Sets_allMethods_Jan2020/pCRMeval/top_noneAmplCurve/output_top_none_oldAllSetsAllMethods.bed",header = TRUE)
+top_median_imm <- read.table("~/Box/SCRMshaw_HD_all29Sets_allMethods_Jan2020/pCRMeval/medianAmplitudeCurve/output_topMedianAmp_allold29sets_IMM.bed",header = TRUE)
+top_elbow_imm <- read.table("~/Box/SCRMshaw_HD_all29Sets_allMethods_Jan2020/pCRMeval/elbowAmplitudeCurve/output_topAll29_elbow_IMM.bed",header = TRUE)
+top_none_imm <-  subset(top_none,top_none$Method=="imm")
+
+  boxplot(top_none_imm$PercentageTrainingSetSensitivity*100,top_median_imm$PercentageTrainingSetSensitivity*100,top_elbow_imm$PercentageTrainingSetSensitivity*100,top_none_imm$PercentageRedflyRecovered*100,top_median_imm$PercentageRedflyRecovered*100,top_elbow_imm$PercentageRedflyRecovered*100,top_none_imm$percentageExpressionPatternPrecision*100,top_median_imm$percentageExpressionPatternPrecision*100,top_elbow_imm$percentageExpressionPatternPrecision*100,names = c("TS_None","TS_Med","TS_Elb","RR_None","RR_Med","RR_Elb","EP_None","EP_Med","EP_Elb"),main="Percentage_comparison_3methods_allmeasures_new74sets",boxwex=0.6,col = c("orange","red","blue","orange","red","blue","orange","red","blue"),ylim=c(0,100))
+
+
+
+```
+
+
+##Dotplots
+
+####Training set Sensitivity
+```{r TS,message=FALSE, fig.height=6, fig.width=8, fig.align='center'}
+library(ggplot2)
+#Training set Sensitivity
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=PercentageTrainingSetSensitivity*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=PercentageTrainingSetSensitivity*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=PercentageTrainingSetSensitivity*100,colour="Elbow"),pch=8)+
+  scale_colour_manual(values = c("orange","red","blue","black"))+
+  ylim(0,100)+
+  theme_bw()
+
+```
+
+
+####Redfly Recovery
+```{r dotRR ,fig.height=6, fig.width=8, fig.align='center'}
+#Redfly Recovery
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=PercentageRedflyRecovered*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=PercentageRedflyRecovered*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=PercentageRedflyRecovered*100,colour="Elbow"),pch=8)+
+  scale_colour_manual(values = c("orange","red","blue"))+
+  ylim(0,100)+
+  theme_bw()
+
+```
+
+####Expression Pattern Precision
+```{r dotEP,fig.height=6, fig.width=8, fig.align='center'}
+#Pattern Precision
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=percentageExpressionPatternPrecision*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=percentageExpressionPatternPrecision*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=percentageExpressionPatternPrecision*100,colour="Elbow"),pch=8)+
+  ylim(0,100)+
+  scale_colour_manual(values = c("orange","red","blue"))+
+  theme_bw()
+
+```
+
+####Expression Pattern Recall
+```{r dotER ,fig.height=6, fig.width=8, fig.align='center'}
+#Pattern Precision permuted comparison
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=percentageExpressionPatternRecall*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=ExpectedpercentageExpressionPatternRecall*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=ExpectedpercentageExpressionPatternRecall*100,colour="Elbow"),pch=8)+
+
+  ylim(0,100)+
+  scale_colour_manual(values = c("orange","red","blue"))+
+  theme_bw()
+
+```
+
+##Old Training set classification
+
+###Top Median of Amplitude curve
+
+```{r median_old_3_sets}
+#random 29
+top_fake <-read.table("/Users/hasibaasma/Box/complete_data_representation_newMethod/files/del_randomAvg62sets_28times_Excel_withSpec.bed",header = T)
+
+top_orig_oldSets_Med<- top_median_imm
+
+s1 <- top_orig_oldSets_Med[order(top_orig_oldSets_Med$TsetName),]
+s2 <- top_fake[order(top_fake$TsetName),]
+subsetIMMevaluationOutputContRand1000_Actual1000_diff<- cbind.data.frame(s1$TsetName,s1$Method,s1$TsetSize,s1$SCRMs,s1$TrainingSetRecovered,s1$PercentageTrainingSetSensitivity,s1$REDflyRecovered,s1$PercentageRedflyRecovered,s1$percentageExpressionPatternRecall-s2$PercentageSpecificity,s2$SCRMs,s2$TrainingSetRecovered,s2$PercentageTrainingSetSensitivity,s2$REDflyRecovered,s2$PercentageRedflyRecovered,s1$PercentageTrainingSetSensitivity - s2$PercentageTrainingSetSensitivity,s1$PercentageRedflyRecovered - s2$PercentageRedflyRecovered)
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[1] <-"TsetName"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[4] <-"SCRMs"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[9] <-"DifferenceBetweenActualRandomPercentageSpecificity"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[15] <- "DifferenceBetweenActualRandomTsetRecovery"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[16] <- "DifferenceBetweenActualRandomRedflyRecovery"
+
+##checking..creating ranges of differences to write in the observations
+minimum_differenceBetweenActualRandomRedflyRecovery <- list()
+maximum_differenceBetweenActualRandomRedflyRecovery <- list()
+median_differenceBetweenActualRandomRedflyRecovery <- list()
+minimum_DifferenceBetweenActualTsetRecovery<- list()
+maximum_DifferenceBetweenActualTsetRecovery<- list()
+median_DifferenceBetweenActualTsetRecovery<- list()
+minimum_specificity<- list()
+maximum_specificity<- list()
+median_specificity<- list()
+for(i in unique(subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName)){
+  minimum_differenceBetweenActualRandomRedflyRecovery[[i]] <- min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_differenceBetweenActualRandomRedflyRecovery[[i]] <- median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_differenceBetweenActualRandomRedflyRecovery[[i]] <-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  minimum_DifferenceBetweenActualTsetRecovery[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_DifferenceBetweenActualTsetRecovery[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_DifferenceBetweenActualTsetRecovery[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+  minimum_specificity[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_specificity[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_specificity[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+}
+library(qdapTools)
+minred <- list2df(minimum_differenceBetweenActualRandomRedflyRecovery,"minimum difference to random in redfly recovery","TsetName")
+medred <-list2df(median_differenceBetweenActualRandomRedflyRecovery,"median difference to random in redfly recovery","TsetName")
+maxred<-list2df(maximum_differenceBetweenActualRandomRedflyRecovery,"maximum difference to random in redfly recovery","TsetName")
+minTset<-list2df(minimum_DifferenceBetweenActualTsetRecovery,"minimum difference to random in Tset sensitivity","TsetName")
+maxTset<- list2df(maximum_DifferenceBetweenActualTsetRecovery,"maximum difference to random in Tset sensitivity","TsetName")
+medTset<-list2df(median_DifferenceBetweenActualTsetRecovery,"median difference to random in Tset sensitivity","TsetName")
+minSpec<-list2df(minimum_specificity,"minimum difference to random in specificity","TsetName")
+maxSpec<-list2df(maximum_specificity,"maximum difference to random in specificity","TsetName")
+medSpec <-list2df(median_specificity,"median difference to random in specificity","TsetName")
+
+df1<- merge(medred,medTset,by="TsetName")
+dffinal<-merge(df1,medSpec,by="TsetName")
+#dffinal<-merge(df7,by="TsetName")
+
+
+
+
+#data.frame(unclass(table(dffinal)))
+#table(dffinal)
+write.table(dffinal,file="~/Box/Old_and_newTsets_3postProcMethods_3categories/oldTsets/finaltable_medianAmplitudeCurve_old29tsets.txt",sep = "\t")
+
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+```
+
+####Good Tset
+
+Conditions being set for these good Tsets include:
+
+- Difference To Random in Redfly Recovery must be greater than or equal to 8percent at cutoff, 
+- Difference to Random in Tset Sensitivity must be greater than or equalt to 10percent,
+- Median of Specificity must be greater than or equalt to 8percent 
+
+```{r median_old_goodTsets, results='asis'}
+finaltable<- list()
+# 
+#setting up conditions Good Tsets OverAll
+dffinalDF <- as.data.frame(dffinal)
+
+
+colnames(dffinalDF) <-c("TsetName","MedianDifferenceToRandomOfRedflyRecovery","MedianDifferenceInTsetSensitivity","MedianDifferenceInTsetSpecificity")
+
+
+goodTsetOverAll<- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8,  MedianDifferenceInTsetSensitivity >=10,MedianDifferenceInTsetSpecificity >=8)
+
+
+
+goodTsetsOverAll <- list()
+colnames(goodTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+goodTsetOverAll<- cbind(goodTsetOverAll[1],goodTsetOverAll[2],goodTsetOverAll[3],goodTsetOverAll[4])
+kable_input3<- kable(goodTsetOverAll,digits = 2,caption = "Overall Good Training Sets") 
+#column_spec(kable_input3,2:10,width = "1cm")
+kable_input3
+#goodTsetOverAll
+
+```
+
+####Good Tsets Ignoring Specificity
+Conditions being set for these good Tsets(if we ignore specificity) include:
+
+- Difference To Random in redfly recovery must be greater than or equal to 10percent at cutoff ,
+- Difference In Tset Sensitivity to random must be greater than or equalt to 10.
+
+```{r median_old_goodTsetsIgnoringSpecificity", results='asis'}
+
+goodTsetsIgnoringSpecificity <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=10,MedianDifferenceInTsetSensitivity>=10)
+colnames(goodTsetsIgnoringSpecificity) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+  goodTsetsIgnoringSpecificity <- cbind(goodTsetsIgnoringSpecificity[1],goodTsetsIgnoringSpecificity[2],goodTsetsIgnoringSpecificity[3],goodTsetsIgnoringSpecificity[4])
+kable_input4<- kable(goodTsetsIgnoringSpecificity,digits = 2,caption = "Good Training Sets Ignoring Poor Specificity")
+#column_spec(kable_input4,2:10,width = "2cm")
+kable_input4
+```
+
+####Intermediate
+These are the sets basically, that do not fall into very good or very bad training sets, mainly because they perform good in two measures but not in the third one. Excluded those sets which were already categorized as good.
+
+Specific conditions being set for these Intermediate sets include:
+
+- Difference To Random in redfly recovery must be grater than 8 and Difference to random in Tset Sensitivity must be greater than 10 but that of specificity could be less than 10, OR 
+- Difference To Random in redfly recovery must be greater than 7 and specificity must be greater than 5 but Difference to random in Tset Sensitivity could be less than 10 but not less than random, OR 
+- Difference To random in Tset Sensitivity and specificity must be greater than 10 but Difference to random in redfly recovery could be less than 10 but not less than random.
+
+```{r median_old_IntermediateTSets", results='asis'}
+
+intermediateTSets <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=10 &  MedianDifferenceInTsetSpecificity >=0 | MedianDifferenceToRandomOfRedflyRecovery >=0 & MedianDifferenceInTsetSensitivity >=10 &  MedianDifferenceInTsetSpecificity >=5 |MedianDifferenceToRandomOfRedflyRecovery >=7 & MedianDifferenceInTsetSensitivity >=0 &  MedianDifferenceInTsetSpecificity >=5 )
+onlyintermediateTSets=data.frame()
+
+onlyintermediateTSetsNum <-    which(!(intermediateTSets$TsetName %in% goodTsetOverAll$TsetName))
+  for (i in 1:length(onlyintermediateTSetsNum)){
+         onlyintermediateTSetIter <- intermediateTSets[onlyintermediateTSetsNum[i],]
+        onlyintermediateTSets <- rbind(onlyintermediateTSets,onlyintermediateTSetIter)       
+
+}
+
+
+
+intermediateTSets <- onlyintermediateTSets
+colnames(intermediateTSets) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+ intermediateTSets <- cbind(intermediateTSets[1],intermediateTSets[2],intermediateTSets[3],intermediateTSets[4])
+kable_input4<- kable(intermediateTSets,digits = 2,caption = "Intermediate Tsets") 
+#column_spec(kable_input4,2:10,width = "3cm")
+kable_input4
+
+```
+
+
+####Poor Tsets
+Conditions being set for these poor sets include.
+If a set fullfills any of the following condition
+
+- Difference To Random in redfly recovery is less than 0 OR ,
+- Difference In Tset Sensitivity is less than or equalt to 0 OR,
+- Specificity  is less than or equalt to 0,
+
+
+```{r median_old_poorTsets ,results='asis'}
+#poor Tsets
+
+poorTsetOverAll<- filter(dffinalDF, MedianDifferenceToRandomOfRedflyRecovery <=0 |MedianDifferenceInTsetSensitivity <= 0 | MedianDifferenceInTsetSpecificity<=0 )
+
+colnames(poorTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+poorTsetOverAll<- cbind(poorTsetOverAll[1],poorTsetOverAll[2],poorTsetOverAll[3],poorTsetOverAll[4])
+kable_input6<- kable(poorTsetOverAll,digits = 2,caption = "Overall Poor Training Sets")
+#column_spec(kable_input6,2:10,width = "2cm")
+kable_input6
+```
+
+
+###Top Elbow of Amplitude curve
+
+
+```{r elbow_old_3_sets}
+#random 29
+top_fake <-read.table("/Users/hasibaasma/Box/complete_data_representation_newMethod/files/del_randomAvg62sets_28times_Excel_withSpec.bed",header = T)
+
+top_orig_oldSets_Med<- top_elbow_imm
+
+s1 <- top_orig_oldSets_Med[order(top_orig_oldSets_Med$TsetName),]
+s2 <- top_fake[order(top_fake$TsetName),]
+subsetIMMevaluationOutputContRand1000_Actual1000_diff<- cbind.data.frame(s1$TsetName,s1$Method,s1$TsetSize,s1$SCRMs,s1$TrainingSetRecovered,s1$PercentageTrainingSetSensitivity,s1$REDflyRecovered,s1$PercentageRedflyRecovered,s1$percentageExpressionPatternRecall-s2$PercentageSpecificity,s2$SCRMs,s2$TrainingSetRecovered,s2$PercentageTrainingSetSensitivity,s2$REDflyRecovered,s2$PercentageRedflyRecovered,s1$PercentageTrainingSetSensitivity - s2$PercentageTrainingSetSensitivity,s1$PercentageRedflyRecovered - s2$PercentageRedflyRecovered)
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[1] <-"TsetName"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[4] <-"SCRMs"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[9] <-"DifferenceBetweenActualRandomPercentageSpecificity"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[15] <- "DifferenceBetweenActualRandomTsetRecovery"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[16] <- "DifferenceBetweenActualRandomRedflyRecovery"
+
+##checking..creating ranges of differences to write in the observations
+minimum_differenceBetweenActualRandomRedflyRecovery <- list()
+maximum_differenceBetweenActualRandomRedflyRecovery <- list()
+median_differenceBetweenActualRandomRedflyRecovery <- list()
+minimum_DifferenceBetweenActualTsetRecovery<- list()
+maximum_DifferenceBetweenActualTsetRecovery<- list()
+median_DifferenceBetweenActualTsetRecovery<- list()
+minimum_specificity<- list()
+maximum_specificity<- list()
+median_specificity<- list()
+for(i in unique(subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName)){
+  minimum_differenceBetweenActualRandomRedflyRecovery[[i]] <- min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_differenceBetweenActualRandomRedflyRecovery[[i]] <- median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_differenceBetweenActualRandomRedflyRecovery[[i]] <-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  minimum_DifferenceBetweenActualTsetRecovery[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_DifferenceBetweenActualTsetRecovery[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_DifferenceBetweenActualTsetRecovery[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+  minimum_specificity[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_specificity[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_specificity[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+}
+library(qdapTools)
+minred <- list2df(minimum_differenceBetweenActualRandomRedflyRecovery,"minimum difference to random in redfly recovery","TsetName")
+medred <-list2df(median_differenceBetweenActualRandomRedflyRecovery,"median difference to random in redfly recovery","TsetName")
+maxred<-list2df(maximum_differenceBetweenActualRandomRedflyRecovery,"maximum difference to random in redfly recovery","TsetName")
+minTset<-list2df(minimum_DifferenceBetweenActualTsetRecovery,"minimum difference to random in Tset sensitivity","TsetName")
+maxTset<- list2df(maximum_DifferenceBetweenActualTsetRecovery,"maximum difference to random in Tset sensitivity","TsetName")
+medTset<-list2df(median_DifferenceBetweenActualTsetRecovery,"median difference to random in Tset sensitivity","TsetName")
+minSpec<-list2df(minimum_specificity,"minimum difference to random in specificity","TsetName")
+maxSpec<-list2df(maximum_specificity,"maximum difference to random in specificity","TsetName")
+medSpec <-list2df(median_specificity,"median difference to random in specificity","TsetName")
+
+df1<- merge(medred,medTset,by="TsetName")
+dffinal<-merge(df1,medSpec,by="TsetName")
+#dffinal<-merge(df7,by="TsetName")
+
+
+
+
+#data.frame(unclass(table(dffinal)))
+#table(dffinal)
+write.table(dffinal,file="~/Box/Old_and_newTsets_3postProcMethods_3categories/oldTsets/finaltable_elbowAmplitudeCurve_old29tsets.txt",sep = "\t")
+
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+```
+
+
+####Good Tset
+
+Conditions being set for these good Tsets include:
+
+- Difference To Random in Redfly Recovery must be greater than or equal to 8percent at cutoff, 
+- Difference to Random in Tset Sensitivity must be greater than or equalt to 10percent,
+- Median of Specificity must be greater than or equalt to 8percent 
+
+```{r elbow_old_goodTsets , results='asis'}
+finaltable<- list()
+# 
+#setting up conditions Good Tsets OverAll
+dffinalDF <- as.data.frame(dffinal)
+
+
+colnames(dffinalDF) <-c("TsetName","MedianDifferenceToRandomOfRedflyRecovery","MedianDifferenceInTsetSensitivity","MedianDifferenceInTsetSpecificity")
+
+
+goodTsetOverAll<- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8,  MedianDifferenceInTsetSensitivity >=10,MedianDifferenceInTsetSpecificity >=8)
+
+
+
+goodTsetsOverAll <- list()
+colnames(goodTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+goodTsetOverAll<- cbind(goodTsetOverAll[1],goodTsetOverAll[2],goodTsetOverAll[3],goodTsetOverAll[4])
+kable_input3<- kable(goodTsetOverAll,digits = 2,caption = "Overall Good Training Sets") 
+#column_spec(kable_input3,2:10,width = "2cm")
+
+kable_input3
+```
+
+####Good Tsets Ignoring Specificity
+Conditions being set for these good Tsets(if we ignore specificity) include:
+
+- Difference To Random in redfly recovery must be greater than or equal to 10percent at cutoff ,
+- Difference In Tset Sensitivity to random must be greater than or equalt to 10.
+
+```{r elbow_old_goodTsetsIgnoringSpecificity, results='asis'}
+
+goodTsetsIgnoringSpecificity <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=10,MedianDifferenceInTsetSensitivity>=10)
+colnames(goodTsetsIgnoringSpecificity) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+  goodTsetsIgnoringSpecificity <- cbind(goodTsetsIgnoringSpecificity[1],goodTsetsIgnoringSpecificity[2],goodTsetsIgnoringSpecificity[3],goodTsetsIgnoringSpecificity[4])
+kable_input4<- kable(goodTsetsIgnoringSpecificity,digits = 2,caption = "Good Training Sets Ignoring Poor Specificity")
+#column_spec(kable_input4,2:10,width = "2cm")
+kable_input4
+```
+
+####Intermediate
+These are the sets basically, that do not fall into very good or very bad training sets, mainly because they perform good in two measures but not in the third one. Excluded those sets which were already categorized as good.
+
+Specific conditions being set for these Intermediate sets include:
+
+- Difference To Random in redfly recovery must be grater than 8 and Difference to random in Tset Sensitivity must be greater than 10 but that of specificity could be less than 10, OR 
+- Difference To Random in redfly recovery must be greater than 7 and specificity must be greater than 5 but Difference to random in Tset Sensitivity could be less than 10 but not less than random, OR 
+- Difference To random in Tset Sensitivity and specificity must be greater than 10 but Difference to random in redfly recovery could be less than 10 but not less than random.
+
+```{r elbow_old_IntermediateTSets, results='asis'}
+
+intermediateTSets <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=10 &  MedianDifferenceInTsetSpecificity >=0 | MedianDifferenceToRandomOfRedflyRecovery >=0 & MedianDifferenceInTsetSensitivity >=10 &  MedianDifferenceInTsetSpecificity >=5 |MedianDifferenceToRandomOfRedflyRecovery >=7 & MedianDifferenceInTsetSensitivity >=0 &  MedianDifferenceInTsetSpecificity >=5 )
+onlyintermediateTSets=data.frame()
+
+onlyintermediateTSetsNum <-    which(!(intermediateTSets$TsetName %in% goodTsetOverAll$TsetName))
+  for (i in 1:length(onlyintermediateTSetsNum)){
+         onlyintermediateTSetIter <- intermediateTSets[onlyintermediateTSetsNum[i],]
+        onlyintermediateTSets <- rbind(onlyintermediateTSets,onlyintermediateTSetIter)       
+
+}
+
+
+
+intermediateTSets <- onlyintermediateTSets
+colnames(intermediateTSets) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+ intermediateTSets <- cbind(intermediateTSets[1],intermediateTSets[2],intermediateTSets[3],intermediateTSets[4])
+kable_input4<- kable(intermediateTSets,digits = 2,caption = "Intermediate Tsets") 
+#column_spec(kable_input4,2:10,width = "3cm")
+kable_input4
+
+```
+
+
+####Poor Tsets
+Conditions being set for these poor sets include.
+If a set fullfills any of the following condition: 
+
+- Difference To Random in redfly recovery is less than 0 OR ,
+- Difference In Tset Sensitivity is less than or equalt to 0 OR,
+- Specificity  is less than or equalt to 0,
+
+
+```{r elbow_old_poorTsets, results='asis'}
+#poor Tsets
+
+poorTsetOverAll<- filter(dffinalDF, MedianDifferenceToRandomOfRedflyRecovery <=0 |MedianDifferenceInTsetSensitivity <= 0 | MedianDifferenceInTsetSpecificity<=0 )
+
+colnames(poorTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+poorTsetOverAll<- cbind(poorTsetOverAll[1],poorTsetOverAll[2],poorTsetOverAll[3],poorTsetOverAll[4])
+kable_input6<- kable(poorTsetOverAll,digits = 2,caption = "Overall Poor Training Sets")
+#column_spec(kable_input6,2:10,width = "2cm")
+kable_input6
+```
+
+
+###Top None of Amplitude curve
+
+
+
+```{r none_old_3_sets}
+#random 29
+top_fake <-read.table("/Users/hasibaasma/Box/complete_data_representation_newMethod/files/del_randomAvg62sets_28times_Excel_withSpec.bed",header = T)
+
+top_orig_oldSets_Med<- top_none_imm
+
+s1 <- top_orig_oldSets_Med[order(top_orig_oldSets_Med$TsetName),]
+s2 <- top_fake[order(top_fake$TsetName),]
+subsetIMMevaluationOutputContRand1000_Actual1000_diff<- cbind.data.frame(s1$TsetName,s1$Method,s1$TsetSize,s1$SCRMs,s1$TrainingSetRecovered,s1$PercentageTrainingSetSensitivity,s1$REDflyRecovered,s1$PercentageRedflyRecovered,s1$percentageExpressionPatternRecall-s2$PercentageSpecificity,s2$SCRMs,s2$TrainingSetRecovered,s2$PercentageTrainingSetSensitivity,s2$REDflyRecovered,s2$PercentageRedflyRecovered,s1$PercentageTrainingSetSensitivity - s2$PercentageTrainingSetSensitivity,s1$PercentageRedflyRecovered - s2$PercentageRedflyRecovered)
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[1] <-"TsetName"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[4] <-"SCRMs"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[9] <-"DifferenceBetweenActualRandomPercentageSpecificity"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[15] <- "DifferenceBetweenActualRandomTsetRecovery"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[16] <- "DifferenceBetweenActualRandomRedflyRecovery"
+
+##checking..creating ranges of differences to write in the observations
+minimum_differenceBetweenActualRandomRedflyRecovery <- list()
+maximum_differenceBetweenActualRandomRedflyRecovery <- list()
+median_differenceBetweenActualRandomRedflyRecovery <- list()
+minimum_DifferenceBetweenActualTsetRecovery<- list()
+maximum_DifferenceBetweenActualTsetRecovery<- list()
+median_DifferenceBetweenActualTsetRecovery<- list()
+minimum_specificity<- list()
+maximum_specificity<- list()
+median_specificity<- list()
+for(i in unique(subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName)){
+  minimum_differenceBetweenActualRandomRedflyRecovery[[i]] <- min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_differenceBetweenActualRandomRedflyRecovery[[i]] <- median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_differenceBetweenActualRandomRedflyRecovery[[i]] <-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  minimum_DifferenceBetweenActualTsetRecovery[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_DifferenceBetweenActualTsetRecovery[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_DifferenceBetweenActualTsetRecovery[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+  minimum_specificity[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_specificity[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_specificity[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+}
+library(qdapTools)
+minred <- list2df(minimum_differenceBetweenActualRandomRedflyRecovery,"minimum difference to random in redfly recovery","TsetName")
+medred <-list2df(median_differenceBetweenActualRandomRedflyRecovery,"median difference to random in redfly recovery","TsetName")
+maxred<-list2df(maximum_differenceBetweenActualRandomRedflyRecovery,"maximum difference to random in redfly recovery","TsetName")
+minTset<-list2df(minimum_DifferenceBetweenActualTsetRecovery,"minimum difference to random in Tset sensitivity","TsetName")
+maxTset<- list2df(maximum_DifferenceBetweenActualTsetRecovery,"maximum difference to random in Tset sensitivity","TsetName")
+medTset<-list2df(median_DifferenceBetweenActualTsetRecovery,"median difference to random in Tset sensitivity","TsetName")
+minSpec<-list2df(minimum_specificity,"minimum difference to random in specificity","TsetName")
+maxSpec<-list2df(maximum_specificity,"maximum difference to random in specificity","TsetName")
+medSpec <-list2df(median_specificity,"median difference to random in specificity","TsetName")
+
+df1<- merge(medred,medTset,by="TsetName")
+dffinal<-merge(df1,medSpec,by="TsetName")
+#dffinal<-merge(df7,by="TsetName")
+
+
+
+
+#data.frame(unclass(table(dffinal)))
+#table(dffinal)
+write.table(dffinal,file="~/Box/Old_and_newTsets_3postProcMethods_3categories/oldTsets/finaltable_noneAmplitudeCurve_old29tsets.txt",sep = "\t")
+
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+```
+
+
+####Good Tset
+
+Conditions being set for these good Tsets include:
+
+- Difference To Random in Redfly Recovery must be greater than or equal to 8percent at cutoff, 
+- Difference to Random in Tset Sensitivity must be greater than or equalt to 10percent,
+- Median of Specificity must be greater than or equalt to 8percent 
+
+```{r none_old_goodTsets, results='asis'}
+finaltable<- list()
+# 
+#setting up conditions Good Tsets OverAll
+dffinalDF <- as.data.frame(dffinal)
+
+
+colnames(dffinalDF) <-c("TsetName","MedianDifferenceToRandomOfRedflyRecovery","MedianDifferenceInTsetSensitivity","MedianDifferenceInTsetSpecificity")
+
+
+goodTsetOverAll<- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8,  MedianDifferenceInTsetSensitivity >=10,MedianDifferenceInTsetSpecificity >=8)
+
+
+
+goodTsetsOverAll <- list()
+colnames(goodTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+goodTsetOverAll<- cbind(goodTsetOverAll[1],goodTsetOverAll[2],goodTsetOverAll[3],goodTsetOverAll[4])
+kable_input3<- kable(goodTsetOverAll,digits = 2,caption = "Overall Good Training Sets") 
+#column_spec(kable_input3,2:10,width = "2cm")
+kable_input3
+
+```
+
+####Good Tsets Ignoring Specificity
+Conditions being set for these good Tsets(if we ignore specificity) include:
+
+- Difference To Random in redfly recovery must be greater than or equal to 10percent at cutoff ,
+- Difference In Tset Sensitivity to random must be greater than or equalt to 10.
+
+```{r none_old_goodTsetsIgnoringSpecificity , results='asis'}
+
+goodTsetsIgnoringSpecificity <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=10,MedianDifferenceInTsetSensitivity>=10)
+colnames(goodTsetsIgnoringSpecificity) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+  goodTsetsIgnoringSpecificity <- cbind(goodTsetsIgnoringSpecificity[1],goodTsetsIgnoringSpecificity[2],goodTsetsIgnoringSpecificity[3],goodTsetsIgnoringSpecificity[4])
+kable_input4<- kable(goodTsetsIgnoringSpecificity,digits = 2,caption = "Good Training Sets Ignoring Poor Specificity")
+#column_spec(kable_input4,2:10,width = "2cm")
+kable_input4
+```
+
+
+
+
+####Intermediate
+These are the sets basically, that do not fall into very good or very bad training sets, mainly because they perform good in two measures but not in the third one. Excluded those sets which were already categorized as good.
+
+Specific conditions being set for these Intermediate sets include: 
+
+- Difference To Random in redfly recovery must be grater than 8 and Difference to random in Tset Sensitivity must be greater than 10 but that of specificity could be less than 10, OR 
+- Difference To Random in redfly recovery must be greater than 7 and specificity must be greater than 5 but Difference to random in Tset Sensitivity could be less than 10 but not less than random, OR 
+- Difference To random in Tset Sensitivity and specificity must be greater than 10 but Difference to random in redfly recovery could be less than 10 but not less than random.
+
+```{r none_old_IntermediateTSets , results='asis'}
+
+intermediateTSets <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=10 &  MedianDifferenceInTsetSpecificity >=0 | MedianDifferenceToRandomOfRedflyRecovery >=0 & MedianDifferenceInTsetSensitivity >=10 &  MedianDifferenceInTsetSpecificity >=5 |MedianDifferenceToRandomOfRedflyRecovery >=7 & MedianDifferenceInTsetSensitivity >=0 &  MedianDifferenceInTsetSpecificity >=5 )
+onlyintermediateTSets=data.frame()
+
+onlyintermediateTSetsNum <-    which(!(intermediateTSets$TsetName %in% goodTsetOverAll$TsetName))
+  for (i in 1:length(onlyintermediateTSetsNum)){
+         onlyintermediateTSetIter <- intermediateTSets[onlyintermediateTSetsNum[i],]
+        onlyintermediateTSets <- rbind(onlyintermediateTSets,onlyintermediateTSetIter)       
+
+}
+
+
+
+intermediateTSets <- onlyintermediateTSets
+colnames(intermediateTSets) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+ intermediateTSets <- cbind(intermediateTSets[1],intermediateTSets[2],intermediateTSets[3],intermediateTSets[4])
+kable_input4<- kable(intermediateTSets,digits = 2,caption = "Intermediate Tsets") 
+#column_spec(kable_input4,2:10,width = "3cm")
+kable_input4
+
+```
+
+
+####Poor Tsets
+Conditions being set for these poor sets include.
+If a set fullfills any of the following condition
+
+- Difference To Random in redfly recovery is less than 0 OR ,
+- Difference In Tset Sensitivity is less than or equalt to 0 OR,
+- Specificity  is less than or equalt to 0,
+
+
+```{r none_old_poorTsets , results='asis'}
+#poor Tsets
+
+poorTsetOverAll<- filter(dffinalDF, MedianDifferenceToRandomOfRedflyRecovery <=0 |MedianDifferenceInTsetSensitivity <= 0 | MedianDifferenceInTsetSpecificity<=0 )
+
+colnames(poorTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+poorTsetOverAll<- cbind(poorTsetOverAll[1],poorTsetOverAll[2],poorTsetOverAll[3],poorTsetOverAll[4])
+kable_input6<- kable(poorTsetOverAll,digits = 2,caption = "Overall Poor Training Sets")
+#column_spec(kable_input6,2:10,width = "2cm")
+kable_input6
+```
+
+
+
+
+New 72 Training sets
+====================
+New 74 training sets constructed on January 2020
+
+##Boxplot New Tsets: None vs Elbow vs Median
+
+```{r boxplots_New ,fig.width=12, fig.align='center'}
+top_none <- read.table("~/Box/NewTrainingSetsJan2020/pCRMeval_June20_postProcM/None/output_topNone_allNew74sets_IMM.bed",header = TRUE)
+
+top_median_imm <- read.table("~/Box/NewTrainingSetsJan2020/pCRMeval_June20_postProcM/Median/output_topMed_allNew74sets_IMM.bed",header = TRUE)
+#top_median_imm <- read.table("~/Box/output_topMedianAmp_allold29sets_IMM copy.bed",header = TRUE)
+top_elbow_imm <- read.table("~/Box/NewTrainingSetsJan2020/pCRMeval_June20_postProcM/elbow/output_topElbow_allNew74sets_IMM.bed",header = TRUE)
+#top_elbow_imm <- read.table("~/Box/output_topAll29_elbow copy.bed",header = TRUE)
+top_none_imm <-  subset(top_none,top_none$Method=="imm")
+  boxplot(top_none_imm$PercentageTrainingSetSensitivity*100,top_median_imm$PercentageTrainingSetSensitivity*100,top_elbow_imm$PercentageTrainingSetSensitivity*100,top_none_imm$PercentageRedflyRecovered*100,top_median_imm$PercentageRedflyRecovered*100,top_elbow_imm$PercentageRedflyRecovered*100,top_none_imm$percentageExpressionPatternPrecision*100,top_median_imm$percentageExpressionPatternPrecision*100,top_elbow_imm$percentageExpressionPatternPrecision*100,names = c("TS_None","TS_Med","TS_Elb","RR_None","RR_Med","RR_Elb","EP_None","EP_Med","EP_Elb"),main="Percentage_comparison_3methods_allmeasures_new74sets",boxwex=0.6,col = c("orange","red","blue","orange","red","blue","orange","red","blue"),ylim=c(0,100))
+
+
+
+```
+
+
+##Dotplots 3 top N methods
+
+
+####Training set Sensitivity
+```{r TSN,message=FALSE,fig.height=6, fig.width=8, fig.align='center'}
+library(ggplot2)
+#Training set Sensitivity
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=PercentageTrainingSetSensitivity*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=PercentageTrainingSetSensitivity*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=PercentageTrainingSetSensitivity*100,colour="Elbow"),pch=8)+
+  scale_colour_manual(values = c("orange","red","blue","black"))+
+  ylim(0,100)+
+  theme_bw()
+
+```
+
+####Redfly Recovery
+```{r dot_RRN ,fig.height=6, fig.width=8, fig.align='center'}
+#Redfly Recovery
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=PercentageRedflyRecovered*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=PercentageRedflyRecovered*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=PercentageRedflyRecovered*100,colour="Elbow"),pch=8)+
+  scale_colour_manual(values = c("orange","red","blue"))+
+  ylim(0,100)+
+  theme_bw()
+
+```
+
+####Expression Pattern Precision
+```{r dot_EPN,fig.height=6, fig.width=8, fig.align='center'}
+#Pattern Precision
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=percentageExpressionPatternPrecision*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=percentageExpressionPatternPrecision*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=percentageExpressionPatternPrecision*100,colour="Elbow"),pch=8)+
+  ylim(0,100)+
+  scale_colour_manual(values = c("orange","red","blue"))+
+  theme_bw()
+
+```
+
+####Expression Pattern Recall
+```{r dot_ERN ,fig.height=6, fig.width=8, fig.align='center'}
+#Pattern Precision permuted comparison
+ggplot(top_none_imm)+
+  facet_wrap(~TsetName)+  
+  geom_point(data=top_none_imm,aes(x=SCRMs,y=percentageExpressionPatternRecall*100,colour="None"),pch=8)+
+  geom_point(data=top_median_imm,aes(x=SCRMs,y=ExpectedpercentageExpressionPatternRecall*100,colour="Median"),pch=8)+
+  geom_point(data=top_elbow_imm,aes(x=SCRMs,y=ExpectedpercentageExpressionPatternRecall*100,colour="Elbow"),pch=8)+
+
+  ylim(0,100)+
+  scale_colour_manual(values = c("orange","red","blue"))+
+  theme_bw()
+
+```
+
+
+##New Training sets classification
+
+
+###Top Median of Amplitude curve
+
+```{r median_new_3_sets}
+#random 29
+top_fake <-read.table("/Users/hasibaasma/Box/NewTrainingSetsJan2020/R/random62oldRun/old/del_randomMEDIAN62sets_75times_Excel_withSpec.txt",header = T)
+
+top_orig_newMed<- top_median_imm
+
+s1 <- top_orig_newMed[order(top_orig_newMed$TsetName),]
+s2 <- top_fake[order(top_fake$TsetName),]
+subsetIMMevaluationOutputContRand1000_Actual1000_diff<- cbind.data.frame(s1$TsetName,s1$Method,s1$TsetSize,s1$SCRMs,s1$TrainingSetRecovered,s1$PercentageTrainingSetSensitivity,s1$REDflyRecovered,s1$PercentageRedflyRecovered,s1$percentageExpressionPatternRecall-s1$ExpectedpercentageExpressionPatternRecall,s2$SCRMs,s2$TrainingSetRecovered,s2$PercentageTrainingSetSensitivity,s2$REDflyRecovered,s2$PercentageRedflyRecovered,s1$PercentageTrainingSetSensitivity - s2$PercentageTrainingSetSensitivity,s1$PercentageRedflyRecovered - s2$PercentageRedflyRecovered)
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[1] <-"TsetName"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[4] <-"SCRMs"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[9] <-"DifferenceBetweenActualRandomPercentageSpecificity"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[15] <- "DifferenceBetweenActualRandomTsetRecovery"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[16] <- "DifferenceBetweenActualRandomRedflyRecovery"
+
+##checking..creating ranges of differences to write in the observations
+minimum_differenceBetweenActualRandomRedflyRecovery <- list()
+maximum_differenceBetweenActualRandomRedflyRecovery <- list()
+median_differenceBetweenActualRandomRedflyRecovery <- list()
+minimum_DifferenceBetweenActualTsetRecovery<- list()
+maximum_DifferenceBetweenActualTsetRecovery<- list()
+median_DifferenceBetweenActualTsetRecovery<- list()
+minimum_specificity<- list()
+maximum_specificity<- list()
+median_specificity<- list()
+for(i in unique(subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName)){
+  minimum_differenceBetweenActualRandomRedflyRecovery[[i]] <- min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_differenceBetweenActualRandomRedflyRecovery[[i]] <- median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_differenceBetweenActualRandomRedflyRecovery[[i]] <-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  minimum_DifferenceBetweenActualTsetRecovery[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_DifferenceBetweenActualTsetRecovery[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_DifferenceBetweenActualTsetRecovery[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+  minimum_specificity[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_specificity[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_specificity[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+}
+library(qdapTools)
+minred <- list2df(minimum_differenceBetweenActualRandomRedflyRecovery,"minimum difference to random in redfly recovery","TsetName")
+medred <-list2df(median_differenceBetweenActualRandomRedflyRecovery,"median difference to random in redfly recovery","TsetName")
+maxred<-list2df(maximum_differenceBetweenActualRandomRedflyRecovery,"maximum difference to random in redfly recovery","TsetName")
+minTset<-list2df(minimum_DifferenceBetweenActualTsetRecovery,"minimum difference to random in Tset sensitivity","TsetName")
+maxTset<- list2df(maximum_DifferenceBetweenActualTsetRecovery,"maximum difference to random in Tset sensitivity","TsetName")
+medTset<-list2df(median_DifferenceBetweenActualTsetRecovery,"median difference to random in Tset sensitivity","TsetName")
+minSpec<-list2df(minimum_specificity,"minimum difference to random in specificity","TsetName")
+maxSpec<-list2df(maximum_specificity,"maximum difference to random in specificity","TsetName")
+medSpec <-list2df(median_specificity,"median difference to random in specificity","TsetName")
+
+df1<- merge(medred,medTset,by="TsetName")
+dffinal<-merge(df1,medSpec,by="TsetName")
+#dffinal<-merge(df7,by="TsetName")
+
+
+
+
+#data.frame(unclass(table(dffinal)))
+#table(dffinal)
+write.table(dffinal,file="~/Box/Old_and_newTsets_3postProcMethods_3categories/newTsets/finaltable_new74sets_medianAmplitudeCurve.txt",sep = "\t")
+
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+```
+
+####Good Tsets
+Conditions being set for these good Tsets include:
+
+- Difference To Random in Redfly Recovery must be greater than or equal to 8percent at cutoff,
+- Difference to Random in Tset Sensitivity must be greater than or equalt to 8percent,
+- Difference to Expected in Specificity must be greater than or equalt to 4percent 
+
+```{r median_new_goodTsets, results='asis'}
+
+finaltable<- list()
+# 
+#setting up conditions Good Tsets OverAll
+dffinalDF <- as.data.frame(dffinal)
+
+
+colnames(dffinalDF) <-c("TsetName","MedianDifferenceToRandomOfRedflyRecovery","MedianDifferenceInTsetSensitivity","MedianDifferenceToPermutedInTsetSpecificity")
+
+
+goodTsetOverAll<- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8,  MedianDifferenceInTsetSensitivity >=8,MedianDifferenceToPermutedInTsetSpecificity >=4)
+
+
+
+goodTsetsOverAll <- list()
+colnames(goodTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to permuted in Tset Specificity at cutoff")
+
+goodTsetOverAll<- cbind(goodTsetOverAll[1],goodTsetOverAll[2],goodTsetOverAll[3],goodTsetOverAll[4])
+kable_input3<- kable(goodTsetOverAll,digits = 2,caption = "Overall Good Training Sets with TS and RR > 8 and SP > 4") 
+#column_spec(kable_input3,2:10,width = "2cm")
+kable_input3
+#write.table(goodTsetOverAll,file="~/Box/NewTrainingSetsJan2020/R/goodTsetOverAll.txt",sep = "\t")
+```
+
+####Good Tsets Ignoring Specificity 
+
+Conditions being set for these good Tsets(if we ignore specificity) include:
+
+- Difference To Random in redfly recovery must be greater than or equal to 10percent at cutoff,
+- Difference In Tset Sensitivity to random must be greater than or equalt to 10.
+
+```{r median_new_goodTsetsIgnoringSpecificityN, results='asis'}
+
+goodTsetsIgnoringSpecificity <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=10,MedianDifferenceInTsetSensitivity>=10)
+colnames(goodTsetsIgnoringSpecificity) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to permuted in Tset Specificity at cutoff")
+goodTsetsIgnoringSpecificity <- cbind(goodTsetsIgnoringSpecificity[1],goodTsetsIgnoringSpecificity[2],goodTsetsIgnoringSpecificity[3],goodTsetsIgnoringSpecificity[4])
+kable_input4<- kable(goodTsetsIgnoringSpecificity,digits = 2,caption = "Good Training Sets Ignoring Poor Specificity both > 10")
+#column_spec(kable_input4,2:10,width = "2cm")
+kable_input4
+#write.table(goodTsetsIgnoringSpecificity,file="~/Box/NewTrainingSetsJan2020/R/goodTsetsIgnoringSpecificity.txt",sep = "\t")
+```
+
+####Intermediate Tsets
+
+These are the sets basically, that do not fall into very good or very bad training sets, mainly because they perform good in two measures but not in the third one. Not anymore , Excluded those sets which were already categorized as good.
+
+Specific conditions being set for these Intermediate sets include: 
+
+- Difference To Random in redfly recovery must be grater than 8 and Difference to random in Tset Sensitivity must be greater than 8 but that of specificity should just be greater than 0 , OR 
+- Difference To Random in redfly recovery must be greater than 8 and specificity must be greater than 4 but Difference to random in Tset Sensitivity should just be greater than 0 , OR 
+- Difference To random in Tset Sensitivity and specificity must be greater than 8 and 4 respectively but Difference to random in redfly recovery should just be greater than 0.
+
+```{r median_new_IntermediateTSetsN, results='asis'}
+
+intermediateTSets <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=8 &  MedianDifferenceToPermutedInTsetSpecificity >=0 | MedianDifferenceToRandomOfRedflyRecovery >=0 & MedianDifferenceInTsetSensitivity >=8 &  MedianDifferenceToPermutedInTsetSpecificity >=4 |MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=0 &  MedianDifferenceToPermutedInTsetSpecificity >=4 )
+onlyintermediateTSets=data.frame()
+
+# onlyintermediateTSetsNum <-    which(!(intermediateTSets$TsetName %in% goodTsetOverAll$TsetName))
+# for (i in 1:length(onlyintermediateTSetsNum)){
+# onlyintermediateTSetIter <- intermediateTSets[onlyintermediateTSetsNum[i],]
+# onlyintermediateTSets <- rbind(onlyintermediateTSets,onlyintermediateTSetIter)       
+# 
+# }
+
+
+
+#intermediateTSets <- onlyintermediateTSets
+colnames(intermediateTSets) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+intermediateTSets <- cbind(intermediateTSets[1],intermediateTSets[2],intermediateTSets[3],intermediateTSets[4])
+kable_input41<- kable(intermediateTSets,digits = 2,caption = "Intermediate Tsets with all 3 interm") 
+#column_spec(kable_input41,2:10,width = "3cm")
+kable_input41
+#write.table(intermediateTSets,file="~/Box/NewTrainingSetsJan2020/R/intermediateTSets.txt",sep = "\t")
+```
+
+####Poor Tsets
+
+Conditions being set for these poor sets include.
+If a set is poor in two categories then its a poor set   
+
+- Difference To Random in redfly recovery is less than or equalt to 8 and Difference To Random in Tset Sensitivity is also less than or equalt to 8 OR ,
+- Difference To Random in Tset Sensitivity is less than or equalt to 8 and Difference To Permuted in Tset Specificity is also less than or equalt to 4 OR,
+- Difference Random in redfly recovery  is less than or equalt to 8 and Difference To Permuted in Tset Specificity is also less than or equalt to 4 ,
+
+
+```{r median_new_poorTsetsN, results='asis'}
+#poor Tsets
+
+poorTsetOverAll<- filter(dffinalDF, MedianDifferenceToRandomOfRedflyRecovery <=8 & MedianDifferenceInTsetSensitivity <= 8 | MedianDifferenceInTsetSensitivity <= 8 & MedianDifferenceToPermutedInTsetSpecificity<=4 |MedianDifferenceToPermutedInTsetSpecificity<=4 & MedianDifferenceToRandomOfRedflyRecovery <=8 )
+
+colnames(poorTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+poorTsetOverAll<- cbind(poorTsetOverAll[1],poorTsetOverAll[2],poorTsetOverAll[3],poorTsetOverAll[4])
+kable_input6<- kable(poorTsetOverAll,digits = 2,caption = "Overall Poor Training Sets with any one below 0")
+#column_spec(kable_input6,2:10,width = "2cm")
+kable_input6
+#write.table(poorTsetOverAll,file="~/Box/NewTrainingSetsJan2020/R/poorTsetOverAll.txt",sep = "\t")
+```
+
+
+###Top Elbow of Amplitude curve
+
+```{r elbow_new_3_sets}
+#random 29
+top_fake <-read.table("/Users/hasibaasma/Box/NewTrainingSetsJan2020/R/random62oldRun/old/del_randomMEDIAN62sets_75times_Excel_withSpec.txt",header = T)
+
+top_orig_newMed<- top_elbow_imm
+
+s1 <- top_orig_newMed[order(top_orig_newMed$TsetName),]
+s2 <- top_fake[order(top_fake$TsetName),]
+subsetIMMevaluationOutputContRand1000_Actual1000_diff<- cbind.data.frame(s1$TsetName,s1$Method,s1$TsetSize,s1$SCRMs,s1$TrainingSetRecovered,s1$PercentageTrainingSetSensitivity,s1$REDflyRecovered,s1$PercentageRedflyRecovered,s1$percentageExpressionPatternRecall-s1$ExpectedpercentageExpressionPatternRecall,s2$SCRMs,s2$TrainingSetRecovered,s2$PercentageTrainingSetSensitivity,s2$REDflyRecovered,s2$PercentageRedflyRecovered,s1$PercentageTrainingSetSensitivity - s2$PercentageTrainingSetSensitivity,s1$PercentageRedflyRecovered - s2$PercentageRedflyRecovered)
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[1] <-"TsetName"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[4] <-"SCRMs"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[9] <-"DifferenceBetweenActualRandomPercentageSpecificity"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[15] <- "DifferenceBetweenActualRandomTsetRecovery"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[16] <- "DifferenceBetweenActualRandomRedflyRecovery"
+
+##checking..creating ranges of differences to write in the observations
+minimum_differenceBetweenActualRandomRedflyRecovery <- list()
+maximum_differenceBetweenActualRandomRedflyRecovery <- list()
+median_differenceBetweenActualRandomRedflyRecovery <- list()
+minimum_DifferenceBetweenActualTsetRecovery<- list()
+maximum_DifferenceBetweenActualTsetRecovery<- list()
+median_DifferenceBetweenActualTsetRecovery<- list()
+minimum_specificity<- list()
+maximum_specificity<- list()
+median_specificity<- list()
+for(i in unique(subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName)){
+  minimum_differenceBetweenActualRandomRedflyRecovery[[i]] <- min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_differenceBetweenActualRandomRedflyRecovery[[i]] <- median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_differenceBetweenActualRandomRedflyRecovery[[i]] <-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  minimum_DifferenceBetweenActualTsetRecovery[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_DifferenceBetweenActualTsetRecovery[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_DifferenceBetweenActualTsetRecovery[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+  minimum_specificity[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_specificity[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_specificity[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+}
+library(qdapTools)
+minred <- list2df(minimum_differenceBetweenActualRandomRedflyRecovery,"minimum difference to random in redfly recovery","TsetName")
+medred <-list2df(median_differenceBetweenActualRandomRedflyRecovery,"median difference to random in redfly recovery","TsetName")
+maxred<-list2df(maximum_differenceBetweenActualRandomRedflyRecovery,"maximum difference to random in redfly recovery","TsetName")
+minTset<-list2df(minimum_DifferenceBetweenActualTsetRecovery,"minimum difference to random in Tset sensitivity","TsetName")
+maxTset<- list2df(maximum_DifferenceBetweenActualTsetRecovery,"maximum difference to random in Tset sensitivity","TsetName")
+medTset<-list2df(median_DifferenceBetweenActualTsetRecovery,"median difference to random in Tset sensitivity","TsetName")
+minSpec<-list2df(minimum_specificity,"minimum difference to random in specificity","TsetName")
+maxSpec<-list2df(maximum_specificity,"maximum difference to random in specificity","TsetName")
+medSpec <-list2df(median_specificity,"median difference to random in specificity","TsetName")
+
+df1<- merge(medred,medTset,by="TsetName")
+dffinal<-merge(df1,medSpec,by="TsetName")
+#dffinal<-merge(df7,by="TsetName")
+
+
+
+
+#data.frame(unclass(table(dffinal)))
+#table(dffinal)
+write.table(dffinal,file="~/Box/Old_and_newTsets_3postProcMethods_3categories/newTsets/finaltable_new74sets_elbowAmplitudeCurve.txt",sep = "\t")
+
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+```
+
+####Good Tsets
+Conditions being set for these good Tsets include:
+
+- Difference To Random in Redfly Recovery must be greater than or equal to 8percent at cutoff,
+- Difference to Random in Tset Sensitivity must be greater than or equalt to 8percent,
+- Difference to Expected in Specificity must be greater than or equalt to 4percent 
+
+```{r elbow_new_goodTsets, results='asis'}
+
+finaltable<- list()
+# 
+#setting up conditions Good Tsets OverAll
+dffinalDF <- as.data.frame(dffinal)
+
+
+colnames(dffinalDF) <-c("TsetName","MedianDifferenceToRandomOfRedflyRecovery","MedianDifferenceInTsetSensitivity","MedianDifferenceToPermutedInTsetSpecificity")
+
+
+goodTsetOverAll<- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8,  MedianDifferenceInTsetSensitivity >=8,MedianDifferenceToPermutedInTsetSpecificity >=4)
+
+
+
+goodTsetsOverAll <- list()
+colnames(goodTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to permuted in Tset Specificity at cutoff")
+
+goodTsetOverAll<- cbind(goodTsetOverAll[1],goodTsetOverAll[2],goodTsetOverAll[3],goodTsetOverAll[4])
+kable_input3<- kable(goodTsetOverAll,digits = 2,caption = "Overall Good Training Sets with TS and RR > 8 and SP > 4") 
+#column_spec(kable_input3,2:10,width = "2cm")
+kable_input3
+#write.table(goodTsetOverAll,file="~/Box/NewTrainingSetsJan2020/R/goodTsetOverAll.txt",sep = "\t")
+```
+
+####Good Tsets Ignoring Specificity 
+
+Conditions being set for these good Tsets(if we ignore specificity) include:
+
+- Difference To Random in redfly recovery must be greater than or equal to 10percent at cutoff,
+- Difference In Tset Sensitivity to random must be greater than or equalt to 10.
+
+```{r elbow_new_goodTsetsIgnoringSpecificityN, results='asis'}
+
+goodTsetsIgnoringSpecificity <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=10,MedianDifferenceInTsetSensitivity>=10)
+colnames(goodTsetsIgnoringSpecificity) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to permuted in Tset Specificity at cutoff")
+goodTsetsIgnoringSpecificity <- cbind(goodTsetsIgnoringSpecificity[1],goodTsetsIgnoringSpecificity[2],goodTsetsIgnoringSpecificity[3],goodTsetsIgnoringSpecificity[4])
+kable_input4<- kable(goodTsetsIgnoringSpecificity,digits = 2,caption = "Good Training Sets Ignoring Poor Specificity both > 10")
+#column_spec(kable_input4,2:10,width = "2cm")
+kable_input4
+#write.table(goodTsetsIgnoringSpecificity,file="~/Box/NewTrainingSetsJan2020/R/goodTsetsIgnoringSpecificity.txt",sep = "\t")
+```
+
+####Intermediate Tsets
+
+These are the sets basically, that do not fall into very good or very bad training sets, mainly because they perform good in two measures but not in the third one. Not anymore , Excluded those sets which were already categorized as good.
+
+Specific conditions being set for these Intermediate sets include:
+
+- Difference To Random in redfly recovery must be grater than 8 and Difference to random in Tset Sensitivity must be greater than 8 but that of specificity should just be greater than 0 , OR 
+- Difference To Random in redfly recovery must be greater than 8 and specificity must be greater than 4 but Difference to random in Tset Sensitivity should just be greater than 0 , OR 
+- Difference To random in Tset Sensitivity and specificity must be greater than 8 and 4 respectively but Difference to random in redfly recovery should just be greater than 0.
+
+```{r elbow_new_IntermediateTSetsN, results='asis'}
+
+intermediateTSets <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=8 &  MedianDifferenceToPermutedInTsetSpecificity >=0 | MedianDifferenceToRandomOfRedflyRecovery >=0 & MedianDifferenceInTsetSensitivity >=8 &  MedianDifferenceToPermutedInTsetSpecificity >=4 |MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=0 &  MedianDifferenceToPermutedInTsetSpecificity >=4 )
+onlyintermediateTSets=data.frame()
+
+# onlyintermediateTSetsNum <-    which(!(intermediateTSets$TsetName %in% goodTsetOverAll$TsetName))
+# for (i in 1:length(onlyintermediateTSetsNum)){
+# onlyintermediateTSetIter <- intermediateTSets[onlyintermediateTSetsNum[i],]
+# onlyintermediateTSets <- rbind(onlyintermediateTSets,onlyintermediateTSetIter)       
+# 
+# }
+
+
+
+#intermediateTSets <- onlyintermediateTSets
+colnames(intermediateTSets) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+intermediateTSets <- cbind(intermediateTSets[1],intermediateTSets[2],intermediateTSets[3],intermediateTSets[4])
+kable_input41<- kable(intermediateTSets,digits = 2,caption = "Intermediate Tsets with all 3 interm") 
+#column_spec(kable_input41,2:10,width = "3cm")
+kable_input41
+#write.table(intermediateTSets,file="~/Box/NewTrainingSetsJan2020/R/intermediateTSets.txt",sep = "\t")
+```
+
+####Poor Tsets
+
+Conditions being set for these poor sets include.
+If a set is poor in two categories then its a poor set: 
+
+- Difference To Random in redfly recovery is less than or equalt to 8 and Difference To Random in Tset Sensitivity is also less than or equalt to 8 OR ,
+- Difference To Random in Tset Sensitivity is less than or equalt to 8 and Difference To Permuted in Tset Specificity is also less than or equalt to 4 OR,
+- Difference Random in redfly recovery  is less than or equalt to 8 and Difference To Permuted in Tset Specificity is also less than or equalt to 4 ,
+
+
+```{r elbow_new_poorTsetsN, results='asis'}
+#poor Tsets
+
+poorTsetOverAll<- filter(dffinalDF, MedianDifferenceToRandomOfRedflyRecovery <=8 & MedianDifferenceInTsetSensitivity <= 8 | MedianDifferenceInTsetSensitivity <= 8 & MedianDifferenceToPermutedInTsetSpecificity<=4 |MedianDifferenceToPermutedInTsetSpecificity<=4 & MedianDifferenceToRandomOfRedflyRecovery <=8 )
+
+colnames(poorTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+poorTsetOverAll<- cbind(poorTsetOverAll[1],poorTsetOverAll[2],poorTsetOverAll[3],poorTsetOverAll[4])
+kable_input6<- kable(poorTsetOverAll,digits = 2,caption = "Overall Poor Training Sets with any one below 0")
+#column_spec(kable_input6,2:10,width = "2cm")
+kable_input6
+#write.table(poorTsetOverAll,file="~/Box/NewTrainingSetsJan2020/R/poorTsetOverAll.txt",sep = "\t")
+```
+
+
+###Top None of Amplitude curve
+
+```{r none new 3 sets}
+#random 29
+top_fake <-read.table("/Users/hasibaasma/Box/NewTrainingSetsJan2020/R/random62oldRun/old/del_randomMEDIAN62sets_75times_Excel_withSpec.txt",header = T)
+
+top_orig_newMed<- top_none_imm
+
+s1 <- top_orig_newMed[order(top_orig_newMed$TsetName),]
+s2 <- top_fake[order(top_fake$TsetName),]
+subsetIMMevaluationOutputContRand1000_Actual1000_diff<- cbind.data.frame(s1$TsetName,s1$Method,s1$TsetSize,s1$SCRMs,s1$TrainingSetRecovered,s1$PercentageTrainingSetSensitivity,s1$REDflyRecovered,s1$PercentageRedflyRecovered,s1$percentageExpressionPatternRecall-s1$ExpectedpercentageExpressionPatternRecall,s2$SCRMs,s2$TrainingSetRecovered,s2$PercentageTrainingSetSensitivity,s2$REDflyRecovered,s2$PercentageRedflyRecovered,s1$PercentageTrainingSetSensitivity - s2$PercentageTrainingSetSensitivity,s1$PercentageRedflyRecovered - s2$PercentageRedflyRecovered)
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[1] <-"TsetName"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[4] <-"SCRMs"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[9] <-"DifferenceBetweenActualRandomPercentageSpecificity"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[15] <- "DifferenceBetweenActualRandomTsetRecovery"
+colnames(subsetIMMevaluationOutputContRand1000_Actual1000_diff)[16] <- "DifferenceBetweenActualRandomRedflyRecovery"
+
+##checking..creating ranges of differences to write in the observations
+minimum_differenceBetweenActualRandomRedflyRecovery <- list()
+maximum_differenceBetweenActualRandomRedflyRecovery <- list()
+median_differenceBetweenActualRandomRedflyRecovery <- list()
+minimum_DifferenceBetweenActualTsetRecovery<- list()
+maximum_DifferenceBetweenActualTsetRecovery<- list()
+median_DifferenceBetweenActualTsetRecovery<- list()
+minimum_specificity<- list()
+maximum_specificity<- list()
+median_specificity<- list()
+for(i in unique(subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName)){
+  minimum_differenceBetweenActualRandomRedflyRecovery[[i]] <- min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_differenceBetweenActualRandomRedflyRecovery[[i]] <- median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_differenceBetweenActualRandomRedflyRecovery[[i]] <-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomRedflyRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  minimum_DifferenceBetweenActualTsetRecovery[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_DifferenceBetweenActualTsetRecovery[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_DifferenceBetweenActualTsetRecovery[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomTsetRecovery[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+  minimum_specificity[[i]]<-min(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  maximum_specificity[[i]]<-max(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  median_specificity[[i]]<-median(subsetIMMevaluationOutputContRand1000_Actual1000_diff$DifferenceBetweenActualRandomPercentageSpecificity[subsetIMMevaluationOutputContRand1000_Actual1000_diff$TsetName==i])*100
+  
+}
+library(qdapTools)
+minred <- list2df(minimum_differenceBetweenActualRandomRedflyRecovery,"minimum difference to random in redfly recovery","TsetName")
+medred <-list2df(median_differenceBetweenActualRandomRedflyRecovery,"median difference to random in redfly recovery","TsetName")
+maxred<-list2df(maximum_differenceBetweenActualRandomRedflyRecovery,"maximum difference to random in redfly recovery","TsetName")
+minTset<-list2df(minimum_DifferenceBetweenActualTsetRecovery,"minimum difference to random in Tset sensitivity","TsetName")
+maxTset<- list2df(maximum_DifferenceBetweenActualTsetRecovery,"maximum difference to random in Tset sensitivity","TsetName")
+medTset<-list2df(median_DifferenceBetweenActualTsetRecovery,"median difference to random in Tset sensitivity","TsetName")
+minSpec<-list2df(minimum_specificity,"minimum difference to random in specificity","TsetName")
+maxSpec<-list2df(maximum_specificity,"maximum difference to random in specificity","TsetName")
+medSpec <-list2df(median_specificity,"median difference to random in specificity","TsetName")
+
+df1<- merge(medred,medTset,by="TsetName")
+dffinal<-merge(df1,medSpec,by="TsetName")
+#dffinal<-merge(df7,by="TsetName")
+
+
+
+
+#data.frame(unclass(table(dffinal)))
+#table(dffinal)
+write.table(dffinal,file="~/Box/Old_and_newTsets_3postProcMethods_3categories/newTsets/finaltable_new74sets_noneAmplitudeCurve.txt",sep = "\t")
+
+library(knitr)
+library(kableExtra)
+library(dplyr)
+
+```
+
+####Good Tsets
+Conditions being set for these good Tsets include:
+
+- Difference To Random in Redfly Recovery must be greater than or equal to 8percent at cutoff,
+- Difference to Random in Tset Sensitivity must be greater than or equalt to 8percent,
+- Difference to Expected in Specificity must be greater than or equalt to 4percent 
+
+```{r none_new_goodTsets, results='asis'}
+
+finaltable<- list()
+# 
+#setting up conditions Good Tsets OverAll
+dffinalDF <- as.data.frame(dffinal)
+
+
+colnames(dffinalDF) <-c("TsetName","MedianDifferenceToRandomOfRedflyRecovery","MedianDifferenceInTsetSensitivity","MedianDifferenceToPermutedInTsetSpecificity")
+
+
+goodTsetOverAll<- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8,  MedianDifferenceInTsetSensitivity >=8,MedianDifferenceToPermutedInTsetSpecificity >=4)
+
+
+
+goodTsetsOverAll <- list()
+colnames(goodTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to permuted in Tset Specificity at cutoff")
+
+goodTsetOverAll<- cbind(goodTsetOverAll[1],goodTsetOverAll[2],goodTsetOverAll[3],goodTsetOverAll[4])
+kable_input3<- kable(goodTsetOverAll,digits = 2,caption = "Overall Good Training Sets with TS and RR > 8 and SP > 4") 
+#column_spec(kable_input3,2:10,width = "2cm")
+kable_input3
+#write.table(goodTsetOverAll,file="~/Box/NewTrainingSetsJan2020/R/goodTsetOverAll.txt",sep = "\t")
+```
+
+####Good Tsets Ignoring Specificity 
+
+Conditions being set for these good Tsets(if we ignore specificity) include:
+
+- Difference To Random in redfly recovery must be greater than or equal to 10percent at cutoff,
+- Difference In Tset Sensitivity to random must be greater than or equalt to 10.
+
+```{r none_new_goodTsetsIgnoringSpecificityN, results='asis'}
+
+goodTsetsIgnoringSpecificity <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=10,MedianDifferenceInTsetSensitivity>=10)
+colnames(goodTsetsIgnoringSpecificity) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to permuted in Tset Specificity at cutoff")
+goodTsetsIgnoringSpecificity <- cbind(goodTsetsIgnoringSpecificity[1],goodTsetsIgnoringSpecificity[2],goodTsetsIgnoringSpecificity[3],goodTsetsIgnoringSpecificity[4])
+kable_input4<- kable(goodTsetsIgnoringSpecificity,digits = 2,caption = "Good Training Sets Ignoring Poor Specificity both > 10")
+#column_spec(kable_input4,2:10,width = "2cm")
+kable_input4
+#write.table(goodTsetsIgnoringSpecificity,file="~/Box/NewTrainingSetsJan2020/R/goodTsetsIgnoringSpecificity.txt",sep = "\t")
+```
+
+####Intermediate Tsets
+
+These are the sets basically, that do not fall into very good or very bad training sets, mainly because they perform good in two measures but not in the third one. Not anymore , Excluded those sets which were already categorized as good.
+
+Specific conditions being set for these Intermediate sets include:
+
+- Difference To Random in redfly recovery must be grater than 8 and Difference to random in Tset Sensitivity must be greater than 8 but that of specificity should just be greater than 0 , OR 
+- Difference To Random in redfly recovery must be greater than 8 and specificity must be greater than 4 but Difference to random in Tset Sensitivity should just be greater than 0 , OR 
+- Difference To random in Tset Sensitivity and specificity must be greater than 8 and 4 respectively but Difference to random in redfly recovery should just be greater than 0.
+
+```{r none_new_IntermediateTSetsN, results='asis'}
+
+intermediateTSets <- filter(dffinalDF,MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=8 &  MedianDifferenceToPermutedInTsetSpecificity >=0 | MedianDifferenceToRandomOfRedflyRecovery >=0 & MedianDifferenceInTsetSensitivity >=8 &  MedianDifferenceToPermutedInTsetSpecificity >=4 |MedianDifferenceToRandomOfRedflyRecovery >=8 & MedianDifferenceInTsetSensitivity >=0 &  MedianDifferenceToPermutedInTsetSpecificity >=4 )
+onlyintermediateTSets=data.frame()
+
+# onlyintermediateTSetsNum <-    which(!(intermediateTSets$TsetName %in% goodTsetOverAll$TsetName))
+# for (i in 1:length(onlyintermediateTSetsNum)){
+# onlyintermediateTSetIter <- intermediateTSets[onlyintermediateTSetsNum[i],]
+# onlyintermediateTSets <- rbind(onlyintermediateTSets,onlyintermediateTSetIter)       
+# 
+# }
+
+
+
+#intermediateTSets <- onlyintermediateTSets
+colnames(intermediateTSets) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+intermediateTSets <- cbind(intermediateTSets[1],intermediateTSets[2],intermediateTSets[3],intermediateTSets[4])
+kable_input41<- kable(intermediateTSets,digits = 2,caption = "Intermediate Tsets with all 3 interm") 
+#column_spec(kable_input41,2:10,width = "3cm")
+kable_input41
+#write.table(intermediateTSets,file="~/Box/NewTrainingSetsJan2020/R/intermediateTSets.txt",sep = "\t")
+```
+
+
+####Poor Tsets
+
+Conditions being set for these poor sets include.
+If a set is poor in two categories then its a poor set:   
+
+- Difference To Random in redfly recovery is less than or equalt to 8 and Difference To Random in Tset Sensitivity is also less than or equalt to 8 OR ,
+- Difference To Random in Tset Sensitivity is less than or equalt to 8 and Difference To Permuted in Tset Specificity is also less than or equalt to 4 OR,
+- Difference Random in redfly recovery  is less than or equalt to 8 and Difference To Permuted in Tset Specificity is also less than or equalt to 4 ,
+
+
+```{r none_new_poorTsetsN, results='asis'}
+#poor Tsets
+
+poorTsetOverAll<- filter(dffinalDF, MedianDifferenceToRandomOfRedflyRecovery <=8 & MedianDifferenceInTsetSensitivity <= 8 | MedianDifferenceInTsetSensitivity <= 8 & MedianDifferenceToPermutedInTsetSpecificity<=4 |MedianDifferenceToPermutedInTsetSpecificity<=4 & MedianDifferenceToRandomOfRedflyRecovery <=8 )
+
+colnames(poorTsetOverAll) <-c("TsetName","Difference to random in redfly recovery at cutoff","Difference in Tset Sensitivity to random at cutoff","Difference to random in Tset Specificity at cutoff")
+
+poorTsetOverAll<- cbind(poorTsetOverAll[1],poorTsetOverAll[2],poorTsetOverAll[3],poorTsetOverAll[4])
+kable_input6<- kable(poorTsetOverAll,digits = 2,caption = "Overall Poor Training Sets with any one below 0")
+#column_spec(kable_input6,2:10,width = "2cm")
+kable_input6
+#write.table(poorTsetOverAll,file="~/Box/NewTrainingSetsJan2020/R/poorTsetOverAll.txt",sep = "\t")
+```
+
